@@ -1,11 +1,11 @@
 import socketio, json
 from botdata import botDetails
-
+from webRTCHandler import handleBotPreOffer
 sio= socketio.Client()
 
 
 
-sio.connect('https://db4fec263fa1.ngrok.io')
+sio.connect('https://f4e6d6297bde.ngrok.io')
 
 
 botdetails = botDetails()
@@ -17,6 +17,8 @@ newBotdata = {
     }
 
 
+
+
 @sio.event
 def connect():
     print('connected to warbotz')
@@ -25,6 +27,15 @@ def connect():
 sio.emit('register-new-bot',newBotdata)
 
 
+def preOfferAnswer(data):
+    sio.emit('bot-pre-offer-answer',data)
+
+
 @sio.on('bot-pre-offer')
 def onPreOffer(data):
     print('got the pre offer', data)
+    handleBotPreOffer(data,preOfferAnswer)
+
+
+
+    
