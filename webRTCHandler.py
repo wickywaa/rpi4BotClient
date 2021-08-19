@@ -37,17 +37,19 @@ async def handleBotWebRTCOffer(data,callback):
     await peerConnection.setRemoteDescription(RTCSessionDescription(sdp=offer['sdp'],type=offer['type']))
     answer = await peerConnection.createAnswer()
     await peerConnection.setLocalDescription(answer)
-    print('this is the data sending to the function')
+    print('this is the data sending to the function',data)
     answerData = {
         "answer":{
         "type":answer.type,
         "sdp":answer.sdp
         },
-        "userSocketId":data
+        "userSocketId":data['userSocket'],
+        "botCallingSocketId":data['botCallingSocketId']
         
         
         }
 
+        
     await callback(json.dumps(answerData))
 
 async def createPeerConnection():
