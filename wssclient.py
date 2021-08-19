@@ -1,11 +1,11 @@
 import socketio, json
 from botdata import botDetails
-from webRTCHandler import handleBotPreOffer
-sio= socketio.Client()
+from webRTCHandler import handleBotPreOffer, handleBotWebRTCOffer
+import asyncio
+import aiohttp
+sio= socketio.AsyncClient()
 
 
-
-sio.connect('https://f4e6d6297bde.ngrok.io')
 
 
 botdetails = botDetails()
@@ -23,19 +23,35 @@ newBotdata = {
 def connect():
     print('connected to warbotz')
 
+async def registerBot():
+    await sio.emit('register-new-bot',newBotdata)
 
-sio.emit('register-new-bot',newBotdata)
 
-
-def preOfferAnswer(data):
-    sio.emit('bot-pre-offer-answer',data)
+async def preOfferAnswer(data):
+    await sio.emit('bot-pre-offer-answer',data)
 
 
 @sio.on('bot-pre-offer')
-def onPreOffer(data):
+async def onPreOffer(data):
     print('got the pre offer', data)
-    handleBotPreOffer(data,preOfferAnswer)
+    await  handleBotPreOffer(data,preOfferAnswer)
 
 
+async def webRTCOfferAnswer(data):
+    print(data)
+    print('sending back the webrtc offer')
+    await  sio.emit('bot_web_rtc_answer',data)
 
-    
+@sio.on('bot_webrtc_offer')
+async def onTCeOffer(data):
+    print('got the RTC Offer')
+    await handleBotWebRTCOffer(data,webRTCOfferAnswer)
+
+async def main():
+    await sio.connect('https://b0b91055329d.ngrok.io')
+    await registerBot()
+    await sio.wait()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
