@@ -1,6 +1,6 @@
 import socketio, json
 from botdata import botDetails
-from webRTCHandler import handleBotPreOffer, handleBotWebRTCOffer
+from webRTCHandler import handleBotPreOffer,handleBotWebRTCOffer,createPeerConnection,handleBotWebRTCCandidate
 import asyncio
 import aiohttp
 sio= socketio.AsyncClient()
@@ -30,6 +30,10 @@ async def registerBot():
 async def preOfferAnswer(data):
     await sio.emit('bot-pre-offer-answer',data)
 
+async def sendICECandidate(data):
+    await sio.emit('bot-ICE-candidate',data)
+    
+
 
 @sio.on('bot-pre-offer')
 async def onPreOffer(data):
@@ -47,8 +51,20 @@ async def onTCeOffer(data):
     print('got the RTC Offer')
     await handleBotWebRTCOffer(data,webRTCOfferAnswer)
 
+@sio.on('bot-RTC-candidate')
+async def onIceOffer(data):
+    print(data)
+    candidate={
+        "candidate":data["candidate"],
+        "sdpMid":data['candidate']["sdpMid"],
+        "sdpMLineIndex":data["candidate"]["sdpMLineIndex"]
+    }
+    print("hrer is the manually created ",candidate)
+    await handleBotWebRTCCandidate(candidate)
+
+
 async def main():
-    await sio.connect('https://b0b91055329d.ngrok.io')
+    await sio.connect('https://52c8-91-67-79-153.ngrok.io')
     await registerBot()
     await sio.wait()
 

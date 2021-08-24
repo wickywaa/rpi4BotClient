@@ -12,18 +12,20 @@ import cv2
 from aiortc.contrib.media import MediaPlayer, MediaRelay
 
 bot = botDetails()
-peerConnection = RTCPeerConnection()
+peerConnection = 'hllo'
 myStream  ='' 
 localStream =''
-
+player =''
 
 
 async def handleBotPreOffer(data,callback):
+    await  createPeerConnection()
     if(bot['botStatus'] == "vacant"):
      await   callback({
             "usersocketId":data['usernameSocketId'],
             "answer":"ACCEPTED"
             })
+
     else:await  callback({"answer":"REJECTED"})
 
 
@@ -32,11 +34,12 @@ async def handleBotPreOffer(data,callback):
 
 
 async def handleBotWebRTCOffer(data,callback):
-    print(data)
+    global peerConnection
     offer =(data['offer'])
     await peerConnection.setRemoteDescription(RTCSessionDescription(sdp=offer['sdp'],type=offer['type']))
     answer = await peerConnection.createAnswer()
     await peerConnection.setLocalDescription(answer)
+
     print('this is the data sending to the function',data)
     answerData = {
         "answer":{
@@ -53,12 +56,41 @@ async def handleBotWebRTCOffer(data,callback):
     await callback(json.dumps(answerData))
 
 async def createPeerConnection():
+    global peerConnection
+    peerConnection= RTCPeerConnection()
+    peerConnection.addTransceiver('video',direction='sendrecv')
+    webcam  = MediaPlayer("/dev/video0")
+    print(" here is the webcam stee",webcam)
+    peerConnection.addTrack(webcam.video)
+    print("attributes for pc",dir(peerConnection)
+    print("tts for ice", dir(peerConnection))
 
-    await getLocalStream()
-    video  = await createLocalTracks(myStream)
-    print (video)
-    print(peerConnection)
+
+
+    @peerConnection.on('connectionstatechange')
+    async def on_connectionstatechange():
+        print('Connection state is %s' % peerConnection.connectionState)
+        if peerConnection.connectionState == 'failed' :
+           await peerConnection.close()
+
+    @peerConnection.on("iceconectionstatechange")
+    async def on_IceGatheringstate():
+        print('Ice connection state', peerConnection.IceConnectionState)
     
+
+ 
+
+
+
+
+async def handleBotWebRTCCandidate(data):
+
+    class candidate:
+        candidate = data['candidate'],
+        sdpMid =data['sdpMid'],
+        sdpMLineIndex =data['sdpMLineIndex']
+
+    print('print',peerConnection.connectionState)
 
 
 async def getLocalStream():
@@ -69,17 +101,16 @@ async def getLocalStream():
             frame = np.fromstring(myStream.getvalue(),dtype=np.uint8)
             myStream.seek(0)
             frame = cv2.imdecode(frame,1)
-            createLocalTracks(myStream)
-            print(frame)
-            return frame
+            player =   createLocalTracks(frame)
+            print('this is the frame',(frame))
+            print('here is the player 2')
+            return player 
 
 
 def createLocalTracks(source):
     global relay,webcam
     player = MediaPlayer(source,options={'video_size':'640X480'})
-    peerConnection = RTCPeerConnection()
-    peerConnection.addTrack(player.video)
-    print(player)
+    return player 
     
     
 
