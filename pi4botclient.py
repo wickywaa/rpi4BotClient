@@ -3,30 +3,19 @@ import attr
 import socketio
 
 sio = socketio.AsyncClient()
-botName = 'deathBot'
 id = '12345678'
 password = "testPassword"
 location = "Berlin"
 online = True
-attributes = {
-    "weapon" :"laser",
-    "speed" : 10,
-    "armour": 10,
-    "seats":3
-}
+
 
 
 @sio.event
 async def connect():
     print('connected to server')
     await sio.emit('registerBot',{
-        "name":botName,
-        "image":"image",
         "id":id,
         "password":password,
-        "location":location,
-        "online":online,
-        "attributes":attributes
         })
 
 
